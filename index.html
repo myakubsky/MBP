@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="מב״פ טראקר"/>
+<meta name="theme-color" content="#050508"/>
+<title>מעקב מב״פ — מקס יקובסקי</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --protein:#e8634a;--protein-acc:#ff8a72;
+    --carbs:#d4a438;--carbs-acc:#f5c842;
+    --fat:#5ab8a8;--fat-acc:#7dd8c8;
+    --water:#4a9fd4;
+    --bg:#050508;--card:#0d0d1a;--card2:#080810;
+    --border:#1e1e35;--text:#d0d0e0;--dim:#555;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;font-size:15px}
+  body{padding:20px 14px 40px;
+    background:radial-gradient(ellipse at 20% 10%,#0d0d22 0%,#050508 60%,#000 100%)}
+  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+  /* HEADER */
+  .header{text-align:center;margin-bottom:4px}
+  .badge{display:inline-block;padding:3px 12px;border-radius:20px;
+    background:rgba(255,255,255,.03);border:1px solid var(--border);
+    font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px;
+    background:linear-gradient(135deg,#fff 30%,#888);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .date-row{font-size:12px;color:#444;margin-top:4px;display:flex;
+    align-items:center;justify-content:center;gap:8px}
+  .save-dot{font-size:10px;color:#2a2a3a;transition:color .4s}
+  .save-dot.active{color:#5ac882}
+
+  /* CARDS */
+  .card{background:linear-gradient(135deg,#0d0d1a,#0a0a15);
+    border:1px solid var(--border);border-radius:16px;padding:18px}
+
+  /* RINGS */
+  .rings-row{display:flex;justify-content:space-around;margin-bottom:16px}
+  .ring-wrap{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .ring-svg{transform:rotate(-90deg)}
+  .ring-inner{position:relative;width:100px;height:100px}
+  .ring-text{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center}
+  .ring-val{font-size:17px;font-weight:700;font-family:monospace}
+  .ring-of{font-size:9px;color:#555}
+  .ring-label{font-size:10px;font-weight:700;letter-spacing:2px}
+  .ring-rem{font-size:10px;font-weight:600}
+
+  /* SUMMARY BAR */
+  .summary{display:flex;gap:8px;padding:10px 14px;
+    background:#080810;border-radius:12px;border:1px solid #111122}
+  .sum-col{flex:1;text-align:center}
+  .sum-label{font-size:9px;color:#444;letter-spacing:1px;margin-bottom:2px}
+  .sum-val{font-size:13px;font-weight:700;font-family:monospace}
+  .sum-sub{font-size:8px;color:#333}
+
+  /* ALERTS */
+  .alert{padding:10px 14px;border-radius:12px;font-size:12px;font-weight:600}
+  .alert-warn{background:rgba(255,80,50,.1);border:1px solid rgba(255,80,50,.4);color:#ff7055}
+  .alert-caution{background:rgba(255,180,30,.1);border:1px solid rgba(255,180,30,.4);color:#ffb81e}
+
+  /* GOAL BANNER */
+  .goal-banner{padding:13px 18px;border-radius:14px;
+    background:linear-gradient(135deg,rgba(90,200,130,.12),rgba(60,180,100,.08));
+    border:1px solid rgba(90,200,130,.4);text-align:center;
+    color:#5ac882;font-weight:700;font-size:13px}
+
+  /* WATER */
+  .water-card{background:linear-gradient(135deg,#0d1f2d,#0a1628);
+    border:1px solid #1a3a5c;border-radius:16px;padding:18px}
+  .water-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .water-label{font-size:10px;letter-spacing:2px;color:var(--water);font-weight:700}
+  .water-val{font-size:20px;font-weight:700;font-family:monospace}
+  .water-of{font-size:12px;color:#555;font-weight:400}
+  .water-btns{display:flex;gap:8px}
+  .btn-minus{width:34px;height:34px;border-radius:10px;border:1px solid #1a3a5c;
+    background:#0d1a2a;color:var(--water);font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center}
+  .btn-plus{width:34px;height:34px;border-radius:10px;border:none;
+    background:linear-gradient(135deg,#1a6a9a,#2a8abf);color:#fff;
+    font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .glasses{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px}
+  .glass{width:18px;height:26px;border-radius:4px;
+    border:1px solid #1a3a5c;background:#0d1a2a;transition:all .2s}
+  .glass.filled{background:linear-gradient(180deg,#4a9fd4,#2a7abf);border-color:#4a9fd4}
+  .water-bar-bg{height:4px;border-radius:2px;background:#0d1a2a;overflow:hidden}
+  .water-bar-fill{height:100%;border-radius:2px;
+    background:linear-gradient(90deg,#2a7abf,#4ab8e8);transition:width .4s}
+  .water-done{margin-top:8px;padding:5px 10px;border-radius:8px;
+    background:rgba(74,159,212,.15);border:1px solid rgba(74,159,212,.3);
+    color:var(--water);font-size:11px;text-align:center;font-weight:600}
+
+  /* LOGGER */
+  .logger-card{background:linear-gradient(135deg,#0f0f1a,#0d0d18);
+    border:1px solid var(--border);border-radius:16px;padding:18px}
+  .logger-title{font-size:10px;letter-spacing:2px;color:#888;font-weight:700;margin-bottom:12px}
+  .macro-tabs{display:flex;gap:6px;margin-bottom:12px}
+  .macro-tab{flex:1;padding:7px 0;border-radius:10px;border:none;
+    background:#0d0d1a;font-size:10px;font-weight:700;letter-spacing:1.5px;
+    cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;color:#555}
+  .food-select{width:100%;padding:9px 12px;border-radius:10px;margin-bottom:10px;
+    background:#0a0a15;border:1px solid var(--border);color:var(--text);
+    font-size:13px;outline:none;cursor:pointer}
+  .input-row{display:flex;gap:8px;margin-bottom:10px;align-items:stretch}
+  .gram-input{flex:1;padding:9px 12px;border-radius:10px;
+    background:#0a0a15;border:1px solid var(--border);color:var(--text);
+    font-size:13px;outline:none}
+  .gram-input::placeholder{color:#333}
+  .mbp-preview{padding:9px 11px;border-radius:10px;background:#0a0a15;
+    border:1px solid var(--border);font-family:monospace;font-size:12px;
+    font-weight:700;white-space:nowrap;display:flex;align-items:center}
+  .fixed-label{flex:1;padding:9px 12px;border-radius:10px;
+    background:#0a0a15;border:1px solid var(--border);color:#555;font-size:12px;
+    display:flex;align-items:center}
+  .add-btn{padding:9px 16px;border-radius:10px;border:none;
+    color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+  .olive-warn{padding:9px 12px;border-radius:10px;margin-bottom:10px;
+    background:rgba(255,80,50,.12);border:1px solid rgba(255,80,50,.4);
+    color:#ff7055;font-size:12px;font-weight:600}
+
+  /* LOG LIST */
+  .log-title{font-size:9px;letter-spacing:2px;color:#444;font-weight:700;margin-bottom:7px}
+  .log-list{max-height:220px;overflow-y:auto}
+  .log-list::-webkit-scrollbar{width:3px}
+  .log-list::-webkit-scrollbar-track{background:transparent}
+  .log-list::-webkit-scrollbar-thumb{background:#1e1e35;border-radius:2px}
+  .log-item{display:flex;align-items:center;padding:7px 10px;border-radius:8px;
+    margin-bottom:4px;background:#080812;gap:8px}
+  .log-name{font-size:12px;color:#c0c0d8;font-weight:500;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .log-fruit{font-size:9px;color:var(--carbs);margin-right:4px}
+  .log-grams{font-size:10px;color:#444}
+  .log-mbp{font-size:13px;font-weight:700;font-family:monospace}
+  .log-type{font-size:8px;font-weight:700;letter-spacing:1px;min-width:32px;text-align:center}
+  .log-del{width:22px;height:22px;border-radius:6px;border:none;
+    background:#0d0d1a;color:#444;cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .log-del:hover{color:#ff5555;background:#1a0808}
+
+  /* REFERENCE */
+  .ref-card{background:var(--card2);border:1px solid #111122;border-radius:14px;padding:14px 16px}
+  .ref-title{font-size:9px;letter-spacing:2px;color:#444;font-weight:700;margin-bottom:10px}
+  .ref-section{margin-bottom:8px}
+  .ref-section-label{font-size:9px;font-weight:700;letter-spacing:1.5px;margin-bottom:4px}
+  .ref-tags{display:flex;flex-wrap:wrap;gap:3px}
+  .ref-tag{font-size:9px;padding:2px 7px;border-radius:5px;color:#777;white-space:nowrap}
+
+  /* CLEAR BTN */
+  .clear-btn{padding:10px 0;border-radius:12px;border:1px solid var(--border);
+    background:transparent;color:#333;font-size:12px;cursor:pointer;
+    font-weight:600;transition:all .2s;width:100%}
+  .clear-btn:hover{color:#ff5555;border-color:rgba(255,85,85,.2)}
+
+  /* FOOTER */
+  .footer{text-align:center;font-size:10px;color:#222;letter-spacing:1px;padding-bottom:8px}
+
+  /* INSTALL BANNER */
+  .install-banner{padding:11px 14px;border-radius:12px;
+    background:rgba(74,159,212,.08);border:1px solid rgba(74,159,212,.25);
+    color:#4a9fd4;font-size:12px;display:flex;align-items:center;gap:10px;
+    justify-content:space-between}
+  .install-banner button{padding:5px 12px;border-radius:8px;border:none;
+    background:var(--water);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
+  .install-banner .dismiss{background:transparent;color:#4a9fd4;
+    border:1px solid rgba(74,159,212,.3);font-size:10px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div style="text-align:center;color:#444;padding:40px">טוען...</div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const MBP = {
+  protein:{label:"חלבון",daily:4.5,color:"#e8634a",acc:"#ff8a72",foods:[
+    {name:"5 ביצים (2 לבן + 1 שלמה)",g:265,mbp:1,fix:true},
+    {name:"סקופ אבקת חלבון",g:30,mbp:1,fix:true},
+    {name:"קוטג׳ 3% / גבינה לבנה 3%",g:250,mbp:1},
+    {name:"גבינה צהובה 9%",g:100,mbp:1},
+    {name:"גבינה צהובה 5%",g:115,mbp:1},
+    {name:"גבינה בולגרית 5%",g:170,mbp:1},
+    {name:"גבינת שמנת סימפוניה 5%",g:200,mbp:1},
+    {name:"גבינת צפתית 5%",g:160,mbp:1},
+    {name:"גבינת לאבנה 5%",g:160,mbp:1},
+    {name:"יופלה GO 0% (1.5 גביעים)",g:300,mbp:1,fix:true},
+    {name:"מולייר אקטיב 200ג׳",g:200,mbp:1,fix:true},
+    {name:"דנונה לייט אנד פריי (2×150ג׳)",g:300,mbp:1,fix:true},
+    {name:"יופלה גו לייט (1.5×200ג׳)",g:300,mbp:1,fix:true},
+    {name:"משקה חלבון PRO 20ג׳",g:330,mbp:1,fix:true},
+    {name:"חזה עוף מבושל",g:130,mbp:1},
+    {name:"חזה הודו מבושל",g:130,mbp:1},
+    {name:"בשר דל שומן (שייטל/סינטה/פילה מיניון/כתף/אווזית)",g:130,mbp:1},
+    {name:"כבד עוף",g:130,mbp:1},
+    {name:"שווארמה הודו",g:130,mbp:1},
+    {name:"פסטרמה 3%",g:130,mbp:1},
+    {name:"שוקיים",g:100,mbp:1},
+    {name:"כרעיים",g:100,mbp:1},
+    {name:"פרגיות",g:100,mbp:1},
+    {name:"קופסת טונה במים",g:160,mbp:1,fix:true},
+    {name:"הליבוט",g:130,mbp:1},
+    {name:"אמנון",g:130,mbp:1},
+    {name:"נסיכת הנילוס",g:130,mbp:1},
+    {name:"לברק",g:130,mbp:1},
+    {name:"פילה סלמון מבושל",g:100,mbp:1},
+    {name:"דג דניס",g:130,mbp:1},
+    {name:"דג בקלה",g:180,mbp:1},
+    {name:"סלמון מעושן",g:150,mbp:1},
+    {name:"דג מושט",g:130,mbp:1},
+  ]},
+  carbs:{label:"פחמימה",daily:6.5,color:"#d4a438",acc:"#f5c842",foods:[
+    {name:"לחם לבחירה (עד 240קל׳/100ג׳)",g:65,mbp:1},
+    {name:"5 פריכיות אורז",g:50,mbp:1,fix:true},
+    {name:"כוסמין — 5 יחידות",g:50,mbp:1,fix:true},
+    {name:"10 פריכיות Fitness דקות",g:60,mbp:1,fix:true},
+    {name:"5 קרקר לחמית",g:50,mbp:1,fix:true},
+    {name:"פצפוצי אורז D&B",g:40,mbp:1},
+    {name:"שיבולת שועל קוואקר",g:45,mbp:1},
+    {name:"אורז מבושל",g:125,mbp:1},
+    {name:"פסטה מורתחת",g:100,mbp:1},
+    {name:"עדשים (כל הצבעים)",g:130,mbp:1},
+    {name:"חיטה מבושלת",g:90,mbp:1},
+    {name:"פתיתים אחרי בישול",g:100,mbp:1},
+    {name:"קוסקוס אחרי בישול",g:140,mbp:1},
+    {name:"בטטה אפויה",g:175,mbp:1},
+    {name:"תפוח אדמה אפוי",g:180,mbp:1},
+    {name:"כוסמת מבושלת",g:170,mbp:1},
+    {name:"קינואה מבושלת",g:130,mbp:1},
+    {name:"בורגול מבושל",g:190,mbp:1},
+    {name:"ברנפלקס פתיתי חיטה מלאה",g:47,mbp:1},
+    {name:"גרנולה (עד 420קל׳/100ג׳)",g:38,mbp:1},
+    {name:"דפי אורז",g:42,mbp:1},
+    {name:"טורטייה (עד 320קל׳/100ג׳)",g:50,mbp:1},
+    {name:"בננה 🍌",g:95,mbp:0.5,fruit:true},
+    {name:"תמר מג׳הול 🌴",g:28,mbp:0.5,fruit:true},
+    {name:"אפרסמון",g:63,mbp:0.5,fruit:true},
+    {name:"ענבים 🍇",g:120,mbp:0.5,fruit:true},
+    {name:"אבטיח 🍉",g:250,mbp:0.5,fruit:true},
+    {name:"תפוח 🍎",g:150,mbp:0.5,fruit:true},
+    {name:"תפוז 🍊",g:170,mbp:0.5,fruit:true},
+    {name:"אשכולית",g:200,mbp:0.5,fruit:true},
+    {name:"פירות יער / תותים 🍓",g:150,mbp:0.5,fruit:true},
+    {name:"קלמנטינה",g:170,mbp:0.5,fruit:true},
+    {name:"מנגו 🥭",g:130,mbp:0.5,fruit:true},
+    {name:"אננס 🍍",g:160,mbp:0.5,fruit:true},
+    {name:"אגס",g:137,mbp:0.5,fruit:true},
+    {name:"אפרסק",g:205,mbp:0.5,fruit:true},
+    {name:"ליצ׳י",g:120,mbp:0.5,fruit:true},
+    {name:"מלון 🍈",g:235,mbp:0.5,fruit:true},
+    {name:"משמש",g:166,mbp:0.5,fruit:true},
+    {name:"קיווי 🥝",g:130,mbp:0.5,fruit:true},
+    {name:"שזיף",g:173,mbp:0.5,fruit:true},
+    {name:"שסק",g:170,mbp:0.5,fruit:true},
+  ]},
+  fat:{label:"שומן",daily:2.0,color:"#5ab8a8",acc:"#7dd8c8",foods:[
+    {name:"שמן זית ❌ גולמי בלבד (לא לבישול!)",g:20,mbp:1,olive:true},
+    {name:"אבוקדו 🥑",g:112,mbp:1},
+    {name:"חמאת בוטנים טבעית",g:32,mbp:1},
+    {name:"טחינה גולמית",g:30,mbp:1},
+    {name:"שקדים",g:31,mbp:1},
+    {name:"אגוזי מלך",g:27,mbp:1},
+    {name:"קשיו",g:32,mbp:1},
+    {name:"פקאן טבעי (לא קלויים!)",g:30,mbp:1},
+    {name:"חמאת שקדים טבעית שקדימון",g:30,mbp:1},
+    {name:"חמאת קשיו",g:30,mbp:1},
+    {name:"זרעי צ׳יה",g:33,mbp:1},
+    {name:"זרעי פשתן",g:33,mbp:1},
+    {name:"שוקולד מריר 70%",g:30,mbp:1},
+    {name:"חמאה (מריחה בלבד!)",g:25,mbp:1},
+    {name:"שמנת 9% תנובה 150מ״ל",g:150,mbp:1,fix:true},
+    {name:"זיתים ירוקים בקופסא",g:90,mbp:1},
+    {name:"קוקוס",g:50,mbp:1},
+    {name:"חלב קוקוס",g:80,mbp:1},
+    {name:"שמן זית חצי מב״פ ❌ גולמי בלבד",g:10,mbp:0.5,olive:true},
+    {name:"אבוקדו חצי מב״פ",g:56,mbp:0.5},
+    {name:"שקדים חצי מב״פ",g:16,mbp:0.5},
+    {name:"קשיו חצי מב״פ",g:15,mbp:0.5},
+  ]},
+};
+const TYPES = ['protein','carbs','fat'];
+const WATER_GOAL = 4000, W_STEP = 250;
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function todayKey(){ const d=new Date(); return `mbp-${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+let state = { entries:[], water:0, macroTab:'protein', foodIdx:0, grams:'', saveFlash:false, showInstall:false };
+let deferredPrompt = null;
+
+function load(){
+  try{
+    const raw = localStorage.getItem(todayKey());
+    if(raw){ const d=JSON.parse(raw); state.entries=d.entries||[]; state.water=d.water||0; }
+  }catch(e){}
+}
+
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{ localStorage.setItem(todayKey(), JSON.stringify({entries:state.entries,water:state.water})); }catch(e){}
+    state.saveFlash=true; render();
+    setTimeout(()=>{ state.saveFlash=false; render(); },800);
+  },300);
+}
+
+// ── COMPUTE ───────────────────────────────────────────────────────────────────
+function totals(){
+  return state.entries.reduce((a,e)=>{ a[e.type]=(a[e.type]||0)+e.mbp; return a; },{protein:0,carbs:0,fat:0});
+}
+function calcMBP(food, g){ return food.fix ? food.mbp : (g/food.g)*food.mbp; }
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function setTab(t){ state.macroTab=t; state.foodIdx=0; state.grams=''; render(); }
+function setFood(i){ state.foodIdx=i; state.grams=''; render(); }
+function setGrams(v){ state.grams=v; render(); }
+function addEntry(){
+  const food = MBP[state.macroTab].foods[state.foodIdx];
+  const g = food.fix ? food.g : parseFloat(state.grams);
+  if(!food.fix && (!g||g<=0)) return;
+  const mbp = parseFloat(calcMBP(food,g).toFixed(3));
+  state.entries.unshift({id:Date.now(),type:state.macroTab,name:food.name,g:food.fix?food.g:g,mbp,fruit:!!food.fruit,olive:!!food.olive});
+  state.grams=''; save(); render();
+}
+function removeEntry(id){ state.entries=state.entries.filter(e=>e.id!==id); save(); render(); }
+function addWater(){ if(state.water<WATER_GOAL){state.water=Math.min(state.water+W_STEP,WATER_GOAL);save();render();} }
+function subWater(){ if(state.water>0){state.water=Math.max(state.water-W_STEP,0);save();render();} }
+function clearDay(){ if(!confirm('למחוק את כל נתוני היום?'))return; state.entries=[]; state.water=0; save(); render(); }
+function dismissInstall(){ state.showInstall=false; render(); }
+function doInstall(){ if(deferredPrompt){deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{deferredPrompt=null;state.showInstall=false;render();});} }
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  const T = totals();
+  const food = MBP[state.macroTab].foods[state.foodIdx];
+  const macro = MBP[state.macroTab];
+  const previewMBP = (!food.fix && state.grams) ? calcMBP(food,parseFloat(state.grams)||0).toFixed(2) : null;
+  const waterPct = Math.min(state.water/WATER_GOAL,1);
+  const glasses = Math.floor(state.water/W_STEP);
+  const totalGlasses = WATER_GOAL/W_STEP;
+  const allDone = state.water>=WATER_GOAL &&
+    Math.abs(T.protein-MBP.protein.daily)<0.05 &&
+    Math.abs(T.carbs-MBP.carbs.daily)<0.05 &&
+    Math.abs(T.fat-MBP.fat.daily)<0.05;
+
+  // Alerts
+  let alertsHtml='';
+  if(T.fat>MBP.fat.daily) alertsHtml+=`<div class="alert alert-warn">🚨 חרגת ממב״פ שומן! ${T.fat.toFixed(2)} / ${MBP.fat.daily}</div>`;
+  if(T.protein>MBP.protein.daily) alertsHtml+=`<div class="alert alert-warn">🚨 חרגת ממב״פ חלבון! ${T.protein.toFixed(2)} / ${MBP.protein.daily}</div>`;
+  if(T.carbs>MBP.carbs.daily) alertsHtml+=`<div class="alert alert-warn">🚨 חרגת ממב״פ פחמימה! ${T.carbs.toFixed(2)} / ${MBP.carbs.daily}</div>`;
+  if(state.entries.some(e=>e.olive)) alertsHtml+=`<div class="alert alert-caution">⚠️ שמן זית — גולמי בלבד, לא לבישול!</div>`;
+
+  // Rings
+  function ring(key){
+    const m=MBP[key], val=T[key]||0, pct=Math.min(val/m.daily,1), over=val>m.daily;
+    const r=42, circ=2*Math.PI*r, dash=pct*circ;
+    const col=over?'#ff4444':m.acc;
+    const rem=m.daily-val;
+    const remColor=rem<0?'#ff4444':rem===0?'#5ac882':m.acc;
+    const remText=rem<0?`+${Math.abs(rem).toFixed(2)} חריגה`:rem===0?'✓ הושג':`${Math.abs(rem).toFixed(2)} נותר`;
+    return `<div class="ring-wrap">
+      <div class="ring-inner">
+        <svg class="ring-svg" width="100" height="100">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1a1a2e" stroke-width="7"/>
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="${col}" stroke-width="7"
+            stroke-dasharray="${dash} ${circ}" stroke-linecap="round"
+            style="transition:stroke-dasharray .5s ease"/>
+        </svg>
+        <div class="ring-text">
+          <span class="ring-val" style="color:${over?'#ff4444':'#f0f0f0'}">${val.toFixed(1)}</span>
+          <span class="ring-of">/ ${m.daily}</span>
+        </div>
+      </div>
+      <span class="ring-label" style="color:${m.color}">${m.label}</span>
+      <span class="ring-rem" style="color:${remColor}">${remText}</span>
+    </div>`;
+  }
+
+  // Summary bar
+  function sumCol(key){
+    const m=MBP[key], rem=m.daily-(T[key]||0);
+    const c=rem<0?'#ff4444':rem===0?'#5ac882':m.acc;
+    const sub=rem<0?'חריגה':rem===0?'הושג':'נותר';
+    return `<div class="sum-col">
+      <div class="sum-label">${m.label}</div>
+      <div class="sum-val" style="color:${c}">${rem<0?'▲':''}${Math.abs(rem).toFixed(2)}</div>
+      <div class="sum-sub">${sub}</div>
+    </div>`;
+  }
+
+  // Macro tabs
+  const tabs = TYPES.map(t=>`<button class="macro-tab${state.macroTab===t?' active':''}"
+    style="${state.macroTab===t?`color:${MBP[t].acc};background:${MBP[t].color}22;border-bottom-color:${MBP[t].color}`:''}"
+    onclick="setTab('${t}')">${MBP[t].label}</button>`).join('');
+
+  // Food select
+  const options = macro.foods.map((f,i)=>
+    `<option value="${i}"${state.foodIdx===i?' selected':''}>${f.name} — ${f.mbp} מב״פ / ${f.fix?'יחידה':f.g+"ג׳"}</option>`).join('');
+
+  // Input row
+  let inputHtml;
+  if(food.fix){
+    inputHtml=`<div class="fixed-label">יחידה קבועה — ${food.g}ג׳ = ${food.mbp} מב״פ</div>`;
+  } else {
+    inputHtml=`<input class="gram-input" type="number" min="0" placeholder="כמה גרם?" value="${state.grams}"
+      oninput="setGrams(this.value)" onkeydown="if(event.key==='Enter')addEntry()"/>`;
+  }
+  const previewHtml = previewMBP
+    ? `<div class="mbp-preview" style="color:${macro.acc}">${previewMBP} מב״פ</div>` : '';
+
+  // Log list
+  const logHtml = state.entries.length===0 ? '' : `
+    <div style="margin-top:10px">
+      <div class="log-title">יומן היום</div>
+      <div class="log-list">
+        ${state.entries.map(e=>{
+          const m=MBP[e.type];
+          return `<div class="log-item" style="border:1px solid ${m.color}22">
+            <div style="flex:1;min-width:0">
+              <div class="log-name">${e.name}${e.fruit?'<span class="log-fruit"> 🍎 פרי</span>':''}</div>
+              <div class="log-grams">${e.g}ג׳</div>
+            </div>
+            <span class="log-mbp" style="color:${m.acc}">${e.mbp.toFixed(2)}</span>
+            <span class="log-type" style="color:${m.color}">${m.label}</span>
+            <button class="log-del" onclick="removeEntry(${e.id})">×</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Glasses
+  const glassesHtml = Array.from({length:totalGlasses},(_,i)=>
+    `<div class="glass${i<glasses?' filled':''}"></div>`).join('');
+
+  // Olive warning
+  const oliveWarn = food.olive ? `<div class="olive-warn">⚠️ שמן זית — רק גולמי! לא לבישול או לטיגון בשום אופן!</div>` : '';
+
+  // Reference table
+  const refHtml = TYPES.map(key=>{
+    const m=MBP[key];
+    const tags = m.foods.map(f=>`<span class="ref-tag" style="background:${m.color}11;border:1px solid ${m.color}22">
+      ${f.fix?f.name:f.g+'ג׳ '+f.name.split('(')[0].trim()}${f.mbp<1?` (${f.mbp} מב״פ)`:''}
+    </span>`).join('');
+    return `<div class="ref-section">
+      <div class="ref-section-label" style="color:${m.color}">${m.label}</div>
+      <div class="ref-tags">${tags}</div>
+    </div>`;
+  }).join('');
+
+  // Install banner
+  const installHtml = state.showInstall ? `
+    <div class="install-banner">
+      <span>📲 הוסף לאפליקציות שלך</span>
+      <div style="display:flex;gap:6px">
+        <button class="dismiss" onclick="dismissInstall()">אחר כך</button>
+        <button onclick="doInstall()">התקן</button>
+      </div>
+    </div>` : '';
+
+  const dateStr = new Date().toLocaleDateString('he-IL',{weekday:'long',month:'long',day:'numeric'});
+
+  document.getElementById('app').innerHTML = `
+    ${installHtml}
+
+    <div class="header">
+      <div class="badge">פרוטוקול מנות בר פחימה</div>
+      <h1>מעקב מב״פ — מקס</h1>
+      <div class="date-row">
+        ${dateStr}
+        <span class="save-dot${state.saveFlash?' active':''}">${state.saveFlash?'✓ נשמר':'●'}</span>
+      </div>
+    </div>
+
+    ${allDone?'<div class="goal-banner">🏆 כל היעדים היומיים הושגו — עקרון העל נשמר!</div>':''}
+    ${alertsHtml?`<div style="display:flex;flex-direction:column;gap:6px">${alertsHtml}</div>`:''}
+
+    <div class="card">
+      <div style="font-size:9px;letter-spacing:2px;color:#444;font-weight:700;text-align:center;margin-bottom:14px">יעדים יומיים</div>
+      <div class="rings-row">${TYPES.map(ring).join('')}</div>
+      <div class="summary">${TYPES.map(sumCol).join('')}</div>
+    </div>
+
+    <div class="water-card">
+      <div class="water-header">
+        <div>
+          <div class="water-label">💧 מים</div>
+          <div class="water-val">${(state.water/1000).toFixed(2)}L<span class="water-of"> / 4L</span></div>
+        </div>
+        <div class="water-btns">
+          <button class="btn-minus" onclick="subWater()" ${state.water<=0?'disabled':''}>−</button>
+          <button class="btn-plus" onclick="addWater()" ${state.water>=WATER_GOAL?'disabled':''}>+</button>
+        </div>
+      </div>
+      <div class="glasses">${glassesHtml}</div>
+      <div class="water-bar-bg"><div class="water-bar-fill" style="width:${waterPct*100}%"></div></div>
+      ${state.water>=WATER_GOAL?'<div class="water-done">✓ יעד המים הושג — 4 ליטר! 💧</div>':''}
+    </div>
+
+    <div class="logger-card">
+      <div class="logger-title">רישום מזון</div>
+      <div class="macro-tabs">${tabs}</div>
+      <select class="food-select" onchange="setFood(parseInt(this.value))">${options}</select>
+      <div class="input-row">
+        ${inputHtml}
+        ${previewHtml}
+        <button class="add-btn" style="background:linear-gradient(135deg,${macro.color},${macro.acc})" onclick="addEntry()">הוסף</button>
+      </div>
+      ${oliveWarn}
+      ${logHtml}
+    </div>
+
+    ${state.entries.length>0||state.water>0?'<button class="clear-btn" onclick="clearDay()">🗑 נקה יום</button>':''}
+
+    <div class="ref-card">
+      <div class="ref-title">טבלת עזר — 1 מב״פ שווה ל:</div>
+      ${refHtml}
+    </div>
+
+    <div class="footer">פרוטוקול מב״פ · עקרון העל: שמור על סך המב״פ היומי בכל מחיר</div>
+  `;
+}
+
+// ── PWA INSTALL ───────────────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredPrompt=e;
+  state.showInstall=true; render();
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+load(); render();
+</script>
+</body>
+</html>
